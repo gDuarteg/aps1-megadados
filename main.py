@@ -1,68 +1,56 @@
-from typing import Optional
 from fastapi import FastAPI
-from pydantic import BaseModel
-import uuid
+from taskcontrol import get_router, create_router, update_router, delete_router
 
-app = FastAPI()
+tags = [
+    {
+        "name": "state",
+        "description": "Checks if API is running normally"
+    },
+    {
+        "name": "get",
+        "description": "Prints all tasks currently in database"
+    },
+    {
+        "name": "filter_status",
+        "description": "Finds all tasks with a given status"
+    },
+    {
+        "name": "filter_id",
+        "description": "Finds a task by a given ID"
+    },
+    {
+        "name":"create",
+        "description":"Method used to create a task"
+    },    
+    {
+        "name": "update_status",
+        "description": "Method used to update the task's status"
+    },
+    {
+        "name": "update_desc",
+        "description": "Method used to update the task's description"
+    },
+    {
+        "name": "delete",
+        "description": "Method used to delete a task"
+    }
+]
 
-class Task(BaseModel):
-    description: str
-    status: bool
+app = FastAPI(
+    title='Task Management',
+    description='Simple API built using FastAPI and Python to better view and manage your tasks',
+    openapi_tags=tags
+)
 
-db = {}
+global db_tasks
+db_tasks = {}
 
 # test status
-@app.get("/")
+@app.get("/", tags=["state"])
 def read_root():
     return {"status": "running"}
 
-# Get all db
-@app.get("/tasks")
-def read_db():
-    return db
-
-# Create Task
-@app.post("/task/")
-def create_task(task: Task):
-    task_id = str(uuid.uuid1())
-    db[task_id] = {
-        'description': task.description,
-        'status': task.status
-    }
-    return {"task_id": task_id}
-
-# Read Task
-@app.get("/task/{item_id}")
-def read_task(task_id: str):
-    if len(db) <= 0:
-        return 'db is empty'
-    else:
-        try:
-            return {"task": db[task_id]}
-        except:
-            return 'id not found'
-
-# Update Task
-@app.put("/task/{item_id}")
-def update_task(task_id: str, task: Task):
-    if len(db) <= 0:
-        return 'db is empty'
-    else:
-        try:
-            db[task_id]['status'] = task.status
-            db[task_id]['description'] = task.description
-            return {"task": db[task_id]}
-        except:
-            return 'id not found'
-
-# Delete Task
-@app.delete("/task/{item_id}")
-def delete_task(task_id: str):
-    if len(db) <= 0:
-        return 'db is empty'
-    else:
-        try:
-            del db[task_id]
-            return 'task deleted'
-        except:
-            return 'id not found'
+app.include_router(get_router)
+app.include_router(create_router)
+app.include_router(update_router)
+app.include_router(delete_router)
